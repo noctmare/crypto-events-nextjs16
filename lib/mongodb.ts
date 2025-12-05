@@ -1,6 +1,4 @@
-import { error } from 'console';
 import mongoose from 'mongoose';
-import { catchError } from 'puppeteer-core/lib/esm/third_party/rxjs/rxjs.js';
 
 // Define the connection cache type
 type MongooseCache = {
@@ -15,12 +13,7 @@ declare global {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Validate that mongodb URI exists
-if (!MONGODB_URI) {
-    throw new Error(
-        'Please define the MongoDB URI environment variable inside .env.local'
-    );
-}
+
 
 // Initialise the cache on the global object to persist across hot reloads in development
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
@@ -36,12 +29,20 @@ if (!global.mongoose) {
  */
 async function connectDB(): Promise<typeof mongoose> {
     // Return existing connection if available 
-    if(cached.conn) {
+    if (cached.conn) {
         return cached.conn;
     }
 
     // Return existing connection promise if one is in progress
-    if(!cached.promise) {
+    if (!cached.promise) {
+
+        // Validate that mongodb URI exists
+        if (!MONGODB_URI) {
+            throw new Error(
+                'Please define the MongoDB URI environment variable inside .env.local'
+            );
+        }
+
         const options = {
             bufferCommands: false, // Disable Mongoose buffering
         };
@@ -52,7 +53,7 @@ async function connectDB(): Promise<typeof mongoose> {
         });
     }
 
-    try{
+    try {
         // Wait for connection to establish
         cached.conn = await cached.promise;
     } catch (error) {
